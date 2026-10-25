@@ -10,11 +10,9 @@ pipeline {
     stages {
         stage('Checkout Verification') {
             steps {
-                echo 'Jenkins successfully checked out the repository.'
+                echo 'Repository checked out successfully.'
                 sh '''
-                    echo "Repository: $GIT_URL"
-                    echo "Branch: $BRANCH_NAME"
-                    echo "Commit: $(git rev-parse --short HEAD)"
+                    git rev-parse --short HEAD
                     test -f backend/Dockerfile
                     test -f frontend/Dockerfile
                     test -f docker-compose.yml
@@ -23,14 +21,52 @@ pipeline {
                 '''
             }
         }
+
+        stage('Backend Tests') {
+            steps {
+                sh '''
+                    docker run --rm \
+                      -v "$WORKSPACE/backend:/app" \
+                      -w /app \
+                      -e DATABASE_URL="sqlite://" \
+                      -e JWT_SECRET_KEY="ci-test-only-secret-not-for-production" \
+                      python:3.12-slim \
+                      sh -c 'pip install --quiet -r requirements.txt && pytest -q'
+                '''
+            }
+        }
+
+        stage('Frontend Lint') {
+            steps {
+                sh '''
+                    docker run --rm \
+                      -v "$WORKSPACE/frontend:/app" \
+                      -w /app \
+                      node:22-bookworm-slim \
+                      sh -c 'npm ci && npm run lint'
+                '''
+            }
+        }
+
+        stage('Frontend Production Build') {
+            steps {
+                sh '''
+                    docker run --rm \
+                      -v "$WORKSPACE/frontend:/app" \
+                      -w /app \
+                      node:22-bookworm-slim \
+                      sh -c 'npm ci && npm run build'
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo 'Initial CI pipeline completed successfully.'
+            echo 'All CI checks passed.'
         }
         failure {
-            echo 'Pipeline failed. Review the console output.'
+            echo 'CI failed. Review the stage console output.'
         }
     }
 }
