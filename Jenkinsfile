@@ -59,11 +59,27 @@ pipeline {
                 '''
             }
         }
+
+        stage('Docker Image Build') {
+            steps {
+                sh '''
+                    docker build \
+                      -t employee-management-backend:ci \
+                      backend/
+
+                    docker build \
+                      -t employee-management-frontend:ci \
+                      frontend/
+
+                    echo "Both Docker images built successfully."
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo 'All CI checks passed.'
+            echo 'All CI checks and Docker image builds passed.'
         }
         failure {
             echo 'CI failed. Review the stage console output.'
