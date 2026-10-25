@@ -26,7 +26,7 @@ pipeline {
             steps {
                 sh '''
                     docker run --rm \
-                      -v "$WORKSPACE/backend:/app" \
+                      -v /var/lib/docker/volumes/jenkins_home/_data/workspace/employee-management-ci-cd/backend:/app \
                       -w /app \
                       -e DATABASE_URL="sqlite://" \
                       -e JWT_SECRET_KEY="ci-test-only-secret-not-for-production" \
@@ -40,7 +40,7 @@ pipeline {
             steps {
                 sh '''
                     docker run --rm \
-                      -v "$WORKSPACE/frontend:/app" \
+                      -v /var/lib/docker/volumes/jenkins_home/_data/workspace/employee-management-ci-cd/frontend:/app \
                       -w /app \
                       node:22-bookworm-slim \
                       sh -c 'npm ci && npm run lint'
@@ -52,7 +52,7 @@ pipeline {
             steps {
                 sh '''
                     docker run --rm \
-                      -v "$WORKSPACE/frontend:/app" \
+                      -v /var/lib/docker/volumes/jenkins_home/_data/workspace/employee-management-ci-cd/frontend:/app \
                       -w /app \
                       node:22-bookworm-slim \
                       sh -c 'npm ci && npm run build'
